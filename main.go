@@ -1,46 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"io"
-	// "os"
+	"os"
 	"strings"
 )
 
 type rot13Reader struct {
-	io.Reader
+	r io.Reader
 }
 
-// first two case to check if it's form a,A to z,Z -13
-// and the second two case is to check if z,Z -13 to z,Z
-func rot13(x byte) byte {
-	switch {
-	case x >= 65 && x <= 77:
-		fallthrough
-	case x >= 97 && x <= 109:
-		return x + 13
-	case x >= 78 && x <= 90:
-		fallthrough
-	case x >= 110 && x <= 122:
-		return x - 13
-	default:
-		return x
+func (r13 *rot13Reader) Read(b []byte) (int, error) {
+	n, err := r13.r.Read(b)
+	for i, val := range b[:n] {
+		if val >= 'a' && val <= 'z' {
+			b[i] = (val-'a'+13)%26 + 'a'
+		} else if val >= 'A' && val <= 'Z' {
+			b[i] = (val-'A'+13)%26 + 'A'
+		}
 	}
-}
-
-func rot13convert(b []byte) []byte {
-	for i, val := range b {
-		x := rot13(val)
-		b[i] = x
-	}
-	return b
+	return n, err
 }
 
 func main() {
 	s := strings.NewReader("Lbh penpxrq gur pbqr!")
 	r := rot13Reader{s}
-	b, _ := io.ReadAll(r.Reader)
-	x := rot13convert(b)
-	// io.Copy(os.Stdout, &r)
-	fmt.Println(string(x))
+	io.Copy(os.Stdout, &r)
 }
